@@ -1,5 +1,5 @@
 [package]
-name = "three-dee-files-rest-api"
+name = "rust-actix-surreal-rest-api"
 version = "0.1.0"
 edition = "2021"
 authors = ["Hannes Roever"]
@@ -19,5 +19,3 @@ utoipa = { features = ["actix_extras"] }
 utoipa-swagger-ui = { features = ["actix-web"] }
 chrono = "*"
 reqwest = {features = ["json"]}
-
-

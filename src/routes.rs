@@ -1,5 +1,9 @@
 pub mod repository {
+
     use actix_web::{get, post, put, delete, web, HttpResponse, Responder};
+    use chrono::prelude::*;
+    use std::env;
+    use log::info;
     use crate::models::repository::*;
     use crate::database::api_connector::*;
 
@@ -14,7 +18,9 @@ pub mod repository {
     (status = 404, description = "Files not found", body = String)))]
     #[get("/repositories")]
     pub async fn get_repositories() -> impl Responder {
-        let url = String::from("http://127.0.0.1:8000/key/repository");
+        let base_url = env::var("BASE_URL").expect("Base URL not found as environment variable");
+        let url = format!("{}/key/repository", base_url);
+        info!("URL GET: {}", url);
         let response = create_client_get_request(url).await;
         response
     }
@@ -26,44 +32,55 @@ pub mod repository {
     #[get("/repositories/{id}")]
     pub async fn get_repository(path: web::Path<String>) -> impl Responder {
         let id = path.into_inner();
-        let url = format!("http://127.0.0.1:8000/key/repository/{id}");
+        let base_url = env::var("BASE_URL").expect("Base URL not found as environment variable");
+        let url = format!("{}/key/repository/{}", base_url, id);
+        info!("URL GET ONE: {}", url);
         let response = create_client_get_request(url).await;
         response
     }
 
     #[utoipa::path(
-        request_body = PostRepository,
-        responses(
-            (status = 201, description = "File created successfully.", body = Vec<ResponseInfo>),
-            (status = 500, description = "Internal Server Error", body = String),
-            (status = 404, description = "Files not found", body = String)
-            )
-        )
-    ]
+    request_body = PostRepository,
+    responses(
+    (status = 201, description = "File created successfully.", body = Vec<ResponseInfo>),
+    (status = 500, description = "Internal Server Error", body = String),
+    (status = 404, description = "Files not found", body = String)))]
     #[post("/repositories")]
     pub async fn add_repository(req: web::Json<PostRepository>) -> impl Responder {
-        let new_repo = PostRepository {
+        let repo = Repository {
+            id: String::from(""),
             name: String::from(&req.name),
+            created_at: format!("{}", Local::now()),
             license: String::from(&req.license),
+            primary_language: String::from(""),
+            commit_count: 0,
+            forks_count: 0,
+            pull_requests: 0,
+            stars_count: 0,
+            watchers: 0,
+            languages_used: Vec::new(),
         };
 
-        let response = create_client_post_request(new_repo).await;
+        let base_url = env::var("BASE_URL").expect("Base URL not found as environment variable");
+        let url = format!("{}/key/repository", base_url);
+        info!("URL POST: {}", url);
+        let response = create_client_post_request(repo, url).await;
         response
     }
 
     #[utoipa::path(
-        request_body = Repository,
-        responses(
-            (status = 204, description = "File changed successfully.", body = ResponseInfo),
-            (status = 404, description = "File with specified id not found", body = String),
-            (status = 409, description = "File with provided id could not be changed", body = String),
-            (status = 500, description = "Internal Server Error", body = String),
-            )
-        )
-    ]
+    request_body = Repository,
+    responses(
+    (status = 204, description = "File changed successfully.", body = ResponseInfo),
+    (status = 404, description = "File with specified id not found", body = String),
+    (status = 409, description = "File with provided id could not be changed", body = String),
+    (status = 500, description = "Internal Server Error", body = String)))]
     #[put("/repositories/{id}")]
     pub async fn change_repository(path: web::Path<String>, req: web::Json<Repository>) -> impl Responder {
         let id = path.into_inner();
+        let base_url = env::var("BASE_URL").expect("Base URL not found as environment variable");
+        let url = format!("{}/key/repository/{}", base_url, id);
+        info!("URL PUT: {}", url);
         let repo = Repository {
             id: String::from(""),
             name: String::from(&req.name),
@@ -78,20 +95,22 @@ pub mod repository {
             languages_used: Vec::new(),
         };
 
-        let response = create_client_put_request(repo, id).await;
+        let response = create_client_put_request(repo, url).await;
         response
     }
 
     #[utoipa::path(
     responses(
-        (status = 201, description = "File deleted successfully.", body = ResponseInfo),
-        (status = 404, description = "File with specified id not found", body = String),
-        (status = 500, description = "Internal Server Error", body = String)))
-    ]
+    (status = 201, description = "File deleted successfully.", body = ResponseInfo),
+    (status = 404, description = "File with specified id not found", body = String),
+    (status = 500, description = "Internal Server Error", body = String)))]
     #[delete("/repositories/{id}")]
     pub async fn delete_repository(path: web::Path<String>) -> impl Responder {
         let id = path.into_inner();
-        let response = create_client_delete_request(id).await;
+        let base_url = env::var("BASE_URL").expect("Base URL not found as environment variable");
+        let url = format!("{}/key/repository/{}", base_url, id);
+        info!("URL DELETE: {}", url);
+        let response = create_client_delete_request(url).await;
         response
     }
 }
